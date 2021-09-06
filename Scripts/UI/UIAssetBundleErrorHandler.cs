@@ -24,12 +24,12 @@ namespace MultiplayerARPG
 
         private void OnManifestLoadedFail()
         {
-
+            onManifestLoadedFail.Invoke();
         }
 
         private void OnAssetBundlesLoadedFail()
         {
-
+            onAssetBundlesLoadedFail.Invoke();
         }
     }
 }
