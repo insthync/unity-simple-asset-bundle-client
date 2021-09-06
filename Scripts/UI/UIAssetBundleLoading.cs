@@ -5,16 +5,16 @@ namespace MultiplayerARPG
 {
     public partial class UIAssetBundleLoading : MonoBehaviour
     {
-        public UILocaleKeySetting formatLoadingAssetBundleFileName = new UILocaleKeySetting(UIFormatKeys.UI_FORMAT_SIMPLE);
-        public UILocaleKeySetting formatLoadedAssetBundles = new UILocaleKeySetting(UIFormatKeys.UI_FORMAT_SIMPLE_MIN_BY_MAX);
+        public string formatLoadingAssetBundleFileName = "{0}";
+        public string formatLoadedAssetBundles = "{0}/{1}";
         public GameObject rootObject;
-        public TextWrapper uiTextProgress;
+        public Text uiTextProgress;
         public Image imageGage;
         public GameObject totalRootObject;
-        public TextWrapper uiTextTotalProgress;
+        public Text uiTextTotalProgress;
         public Image imageGageTotal;
-        public TextWrapper textLoadingAssetBundleFileName;
-        public TextWrapper textLoadedAssetBundlesCount;
+        public Text textLoadingAssetBundleFileName;
+        public Text textLoadedAssetBundlesCount;
 
         private void Awake()
         {
@@ -61,9 +61,9 @@ namespace MultiplayerARPG
                             imageGageTotal.fillAmount = AssetBundleManager.Singleton.TotalLoadProgress;
 
                         if (textLoadingAssetBundleFileName != null)
-                            textLoadingAssetBundleFileName.text = string.Format(LanguageManager.GetText(formatLoadingAssetBundleFileName), AssetBundleManager.Singleton.LoadingAssetBundleFileName);
+                            textLoadingAssetBundleFileName.text = string.Format(formatLoadingAssetBundleFileName, AssetBundleManager.Singleton.LoadingAssetBundleFileName);
                         if (textLoadedAssetBundlesCount != null)
-                            textLoadedAssetBundlesCount.text = string.Format(LanguageManager.GetText(formatLoadedAssetBundles), AssetBundleManager.Singleton.LoadedAssetBundlesCount, AssetBundleManager.Singleton.LoadingAssetBundlesCount);
+                            textLoadedAssetBundlesCount.text = string.Format(formatLoadedAssetBundles, AssetBundleManager.Singleton.LoadedAssetBundlesCount, AssetBundleManager.Singleton.LoadingAssetBundlesCount);
                     }
                     break;
             }
