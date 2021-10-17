@@ -67,6 +67,6 @@ We can exclude them
 
 ![](./Screenshots/scenes-excluding.png)
 
-Then when when game, it will load `_AssetBundleManager` scene, then in `_AssetBundleManager` it has `AssetBundleManager` component which will download asset bundles from server.
+Then when the game started, it will load `_AssetBundleManager` scene, then in `_AssetBundleManager` it has `AssetBundleManager` component which will download asset bundles from server.
 
 After all files were loaded it will load the scene which is `AssetBundleManager` -> `initSceneName` setting, So from above example it will load `00Init` scene.
