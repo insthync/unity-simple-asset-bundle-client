@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace MultiplayerARPG
+namespace SimpleABC
 {
     public partial class UIAssetBundleLoading : MonoBehaviour
     {

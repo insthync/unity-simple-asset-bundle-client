@@ -2,13 +2,14 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Networking;
 using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
 
-namespace MultiplayerARPG
+namespace SimpleABC
 {
     public partial class AssetBundleManager : MonoBehaviour
     {
@@ -266,7 +267,7 @@ namespace MultiplayerARPG
             tempAssetBundle = null;
             // Load platform's manifest to get all asset bundles
             CurrentLoadState = LoadState.LoadManifest;
-            downloadingUrl = new Uri(url).Append(CurrentSetting.platformFolderName, CurrentSetting.platformFolderName).AbsoluteUri;
+            downloadingUrl = UriAppend(new Uri(url), CurrentSetting.platformFolderName, CurrentSetting.platformFolderName).AbsoluteUri;
             yield return StartCoroutine(LoadAssetBundleFromUrlRoutine(downloadingUrl, "manifest", onManifestLoaded, onManifestLoadedFail, null));
             if (tempErrorOccuring)
                 yield break;
@@ -279,7 +280,7 @@ namespace MultiplayerARPG
                 string[] dependencies = manifest.GetAllDependencies(assetBundle);
                 foreach (string dependency in dependencies)
                 {
-                    downloadingUrl = new Uri(url).Append(CurrentSetting.platformFolderName, dependency).AbsoluteUri;
+                    downloadingUrl = UriAppend(new Uri(url), CurrentSetting.platformFolderName, dependency).AbsoluteUri;
                     downloadHash = manifest.GetAssetBundleHash(dependency);
                     if (!loadingAssetBundles.ContainsKey(dependency))
                     {
@@ -294,7 +295,7 @@ namespace MultiplayerARPG
                             LoadingAssetBundlesCount++;
                     }
                 }
-                downloadingUrl = new Uri(url).Append(CurrentSetting.platformFolderName, assetBundle).AbsoluteUri;
+                downloadingUrl = UriAppend(new Uri(url), CurrentSetting.platformFolderName, assetBundle).AbsoluteUri;
                 downloadHash = manifest.GetAssetBundleHash(assetBundle);
                 if (!loadingAssetBundles.ContainsKey(assetBundle))
                 {
@@ -327,6 +328,11 @@ namespace MultiplayerARPG
             // All asset bundles loaded, load init scene
             CurrentLoadState = LoadState.Done;
             SceneManager.LoadScene(initSceneName);
+        }
+
+        public Uri UriAppend(Uri uri, params string[] paths)
+        {
+            return new Uri(paths.Aggregate(uri.AbsoluteUri, (current, path) => string.Format("{0}/{1}", current.TrimEnd('/'), path.TrimStart('/'))));
         }
     }
 }

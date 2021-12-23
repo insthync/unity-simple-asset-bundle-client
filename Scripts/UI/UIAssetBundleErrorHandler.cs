@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace MultiplayerARPG
+namespace SimpleABC
 {
     public class UIAssetBundleErrorHandler : MonoBehaviour
     {
