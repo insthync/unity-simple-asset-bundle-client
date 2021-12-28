@@ -109,7 +109,9 @@ namespace SimpleABC
         }
         public LoadState CurrentLoadState { get; protected set; } = LoadState.None;
         public int LoadingAssetBundlesCount { get; protected set; } = 0;
+        public int LoadingAssetBundlesFromCacheCount { get; protected set; } = 0;
         public int LoadedAssetBundlesCount { get; protected set; } = 0;
+        public int LoadedAssetBundlesFromCacheCount { get; protected set; } = 0;
         public float TotalLoadProgress { get { return LoadedAssetBundlesCount == LoadingAssetBundlesCount ? 1f : ((float)LoadedAssetBundlesCount / (float)LoadingAssetBundlesCount); } }
         public string LoadingAssetBundleFileName { get; protected set; }
         public string LoadingAssetBundleFromCacheFileName { get; protected set; }
@@ -275,6 +277,7 @@ namespace SimpleABC
             AssetBundleManifest manifest = tempAssetBundle.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
             string[] assetBundles = manifest.GetAllAssetBundles();
             LoadingAssetBundlesCount = 0;
+            LoadingAssetBundlesFromCacheCount = 0;
             foreach (string assetBundle in assetBundles)
             {
                 string[] dependencies = manifest.GetAllDependencies(assetBundle);
@@ -293,6 +296,8 @@ namespace SimpleABC
                         });
                         if (!isCached)
                             LoadingAssetBundlesCount++;
+                        else
+                            LoadingAssetBundlesFromCacheCount++;
                     }
                 }
                 downloadingUrl = UriAppend(new Uri(url), CurrentSetting.platformFolderName, assetBundle).AbsoluteUri;
@@ -308,10 +313,13 @@ namespace SimpleABC
                     });
                     if (!isCached)
                         LoadingAssetBundlesCount++;
+                    else
+                        LoadingAssetBundlesFromCacheCount++;
                 }
             }
             // Load all asset bundles
             LoadedAssetBundlesCount = 0;
+            LoadedAssetBundlesFromCacheCount = 0;
             CurrentLoadState = LoadState.LoadAssetBundles;
             foreach (KeyValuePair<string, AssetBundleInfo> loadingAssetBundle in loadingAssetBundles)
             {
@@ -328,6 +336,8 @@ namespace SimpleABC
                 Dependencies[loadingAssetBundle.Key] = tempAssetBundle;
                 if (!isCached)
                     LoadedAssetBundlesCount++;
+                else
+                    LoadedAssetBundlesFromCacheCount++;
             }
             // All asset bundles loaded, load init scene
             CurrentLoadState = LoadState.Done;

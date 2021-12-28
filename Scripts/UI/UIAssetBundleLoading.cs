@@ -38,38 +38,40 @@ namespace SimpleABC
                 case AssetBundleManager.LoadState.Done:
                     if (rootObject != null)
                         rootObject.SetActive(false);
-
                     if (totalRootObject != null)
                         totalRootObject.SetActive(false);
-
                     if (textLoadingAssetBundleFileName != null)
                         textLoadingAssetBundleFileName.text = string.Empty;
                     if (textLoadedAssetBundlesCount != null)
                         textLoadedAssetBundlesCount.text = string.Empty;
                     break;
                 case AssetBundleManager.LoadState.LoadAssetBundles:
-                    if (AssetBundleManager.Singleton.LoadedAssetBundlesCount > 0)
+                    if (AssetBundleManager.Singleton.LoadingAssetBundlesCount > 0 ||
+                        AssetBundleManager.Singleton.LoadingAssetBundlesFromCacheCount > 0)
                     {
                         if (rootObject != null)
                             rootObject.SetActive(true);
-                        if (uiTextProgress != null)
-                            uiTextProgress.text = (AssetBundleManager.Singleton.CurrentWebRequest.downloadProgress * 100f).ToString("N2") + "%";
-                        if (imageGage != null)
-                            imageGage.fillAmount = AssetBundleManager.Singleton.CurrentWebRequest.downloadProgress;
 
-                        if (totalRootObject != null)
-                            totalRootObject.SetActive(true);
-                        if (uiTextTotalProgress != null)
-                            uiTextTotalProgress.text = (AssetBundleManager.Singleton.TotalLoadProgress * 100f).ToString("N2") + "%";
-                        if (imageGageTotal != null)
-                            imageGageTotal.fillAmount = AssetBundleManager.Singleton.TotalLoadProgress;
+                        if (AssetBundleManager.Singleton.LoadingAssetBundlesCount > 0)
+                        {
+                            if (totalRootObject != null)
+                                totalRootObject.SetActive(true);
+                            if (uiTextProgress != null)
+                                uiTextProgress.text = (AssetBundleManager.Singleton.CurrentWebRequest.downloadProgress * 100f).ToString("N2") + "%";
+                            if (imageGage != null)
+                                imageGage.fillAmount = AssetBundleManager.Singleton.CurrentWebRequest.downloadProgress;
+                            if (uiTextTotalProgress != null)
+                                uiTextTotalProgress.text = (AssetBundleManager.Singleton.TotalLoadProgress * 100f).ToString("N2") + "%";
+                            if (imageGageTotal != null)
+                                imageGageTotal.fillAmount = AssetBundleManager.Singleton.TotalLoadProgress;
+                            if (textLoadedAssetBundlesCount != null)
+                                textLoadedAssetBundlesCount.text = string.Format(formatLoadedAssetBundles, AssetBundleManager.Singleton.LoadedAssetBundlesCount, AssetBundleManager.Singleton.LoadingAssetBundlesCount);
+                        }
 
                         if (textLoadingAssetBundleFileName != null)
                             textLoadingAssetBundleFileName.text = !string.IsNullOrEmpty(AssetBundleManager.Singleton.LoadingAssetBundleFileName) ? string.Format(formatLoadingAssetBundleFileName, AssetBundleManager.Singleton.LoadingAssetBundleFileName) : string.Empty;
                         if (textLoadingAssetBundleFromCacheFileName != null)
                             textLoadingAssetBundleFromCacheFileName.text = !string.IsNullOrEmpty(AssetBundleManager.Singleton.LoadingAssetBundleFromCacheFileName) ? string.Format(formatLoadingAssetBundleFromCacheFileName, AssetBundleManager.Singleton.LoadingAssetBundleFromCacheFileName) : string.Empty;
-                        if (textLoadedAssetBundlesCount != null)
-                            textLoadedAssetBundlesCount.text = string.Format(formatLoadedAssetBundles, AssetBundleManager.Singleton.LoadedAssetBundlesCount, AssetBundleManager.Singleton.LoadingAssetBundlesCount);
                     }
                     break;
             }
