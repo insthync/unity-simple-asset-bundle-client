@@ -158,7 +158,6 @@ namespace SimpleABC
                         CurrentSetting = linuxSetting;
                         break;
                 }
-                CurrentSetting = androidSetting;
             }
         }
 
