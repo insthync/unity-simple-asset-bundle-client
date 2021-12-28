@@ -54,6 +54,8 @@ namespace SimpleABC
         [SerializeField]
         protected string initSceneName = "init";
         [SerializeField]
+        protected float delayBeforeLoadInitScene = 0.5f;
+        [SerializeField]
         protected LoadMode loadMode = LoadMode.FromServerUrl;
         [SerializeField]
         protected LoadMode editorLoadMode = LoadMode.FromLocalPath;
@@ -341,6 +343,7 @@ namespace SimpleABC
             }
             // All asset bundles loaded, load init scene
             CurrentLoadState = LoadState.Done;
+            yield return new WaitForSecondsRealtime(delayBeforeLoadInitScene);
             SceneManager.LoadScene(initSceneName);
         }
 
