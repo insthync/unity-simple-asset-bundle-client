@@ -133,8 +133,8 @@ namespace SimpleABC
         private readonly Dictionary<string, AssetBundleInfo> loadingAssetBundles = new Dictionary<string, AssetBundleInfo>();
         private float downloadProgressFromLastOneSeconds = 0f;
         private float sumDeltaProgress = 0f;
-        private float secondsCountDown = 0f;
-        private int secondsCount = 0;
+        private float oneSecondsCounter = 0f;
+        private float secondsCount = 0;
 
         private void Awake()
         {
@@ -193,11 +193,11 @@ namespace SimpleABC
                 return;
             if (CurrentWebRequest == null || CurrentWebRequest.isDone)
                 return;
-            secondsCountDown += Time.deltaTime;
-            if (secondsCountDown >= 1f)
+            oneSecondsCounter += Time.deltaTime;
+            if (oneSecondsCounter >= 1f)
             {
-                secondsCountDown = 0f;
-                secondsCount++;
+                secondsCount += oneSecondsCounter;
+                oneSecondsCounter = 0f;
                 float deltaProgress = CurrentWebRequest.downloadProgress - downloadProgressFromLastOneSeconds;
                 sumDeltaProgress += deltaProgress;
                 LoadingSpeedPerSeconds = (sumDeltaProgress / secondsCount) * LoadingAssetBundleFileSize;
@@ -295,7 +295,7 @@ namespace SimpleABC
                 CurrentWebRequest = UnityWebRequestAssetBundle.GetAssetBundle(url);
             downloadProgressFromLastOneSeconds = 0f;
             sumDeltaProgress = 0f;
-            secondsCountDown = 0f;
+            oneSecondsCounter = 0f;
             secondsCount = 0;
             LoadingSpeedPerSeconds = 0f;
             LoadingRemainingSeconds = float.PositiveInfinity;
