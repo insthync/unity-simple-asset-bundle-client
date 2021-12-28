@@ -96,6 +96,8 @@ namespace SimpleABC
         public UnityEvent onManifestLoadedFail = new UnityEvent();
         public UnityEvent onAssetBundlesLoaded = new UnityEvent();
         public UnityEvent onAssetBundlesLoadedFail = new UnityEvent();
+        [SerializeField]
+        protected bool clearCache = false;
 
         public LoadMode CurrentLoadMode
         {
@@ -114,6 +116,9 @@ namespace SimpleABC
         public int LoadingAssetBundlesFromCacheCount { get; protected set; } = 0;
         public int LoadedAssetBundlesCount { get; protected set; } = 0;
         public int LoadedAssetBundlesFromCacheCount { get; protected set; } = 0;
+        public long LoadingAssetBundleFileSize { get; protected set; } = 0;
+        public double LoadingSpeedPerSeconds { get; protected set; } = 0;
+        public double LoadingRemainingSeconds { get; protected set; } = 0;
         public float TotalLoadProgress { get { return LoadedAssetBundlesCount == LoadingAssetBundlesCount ? 1f : ((float)LoadedAssetBundlesCount / (float)LoadingAssetBundlesCount); } }
         public string LoadingAssetBundleFileName { get; protected set; }
         public string LoadingAssetBundleFromCacheFileName { get; protected set; }
@@ -126,6 +131,10 @@ namespace SimpleABC
         private bool tempErrorOccuring = false;
         private AssetBundle tempAssetBundle = null;
         private readonly Dictionary<string, AssetBundleInfo> loadingAssetBundles = new Dictionary<string, AssetBundleInfo>();
+        private float downloadProgressFromLastOneSeconds = 0f;
+        private float sumDeltaProgress = 0f;
+        private float secondsCountDown = 0f;
+        private int secondsCount = 0;
 
         private void Awake()
         {
@@ -168,8 +177,33 @@ namespace SimpleABC
 
         private void Start()
         {
+#if UNITY_EDITOR
+            if (clearCache)
+                Caching.ClearCache();
+#endif
             if (loadAssetBundleOnStart)
                 LoadAssetBundle();
+        }
+
+        private void Update()
+        {
+            if (CurrentLoadState != LoadState.LoadAssetBundles)
+                return;
+            if (string.IsNullOrEmpty(LoadingAssetBundleFileName))
+                return;
+            if (CurrentWebRequest == null || CurrentWebRequest.isDone)
+                return;
+            secondsCountDown += Time.deltaTime;
+            if (secondsCountDown >= 1f)
+            {
+                secondsCountDown = 0f;
+                secondsCount++;
+                float deltaProgress = CurrentWebRequest.downloadProgress - downloadProgressFromLastOneSeconds;
+                sumDeltaProgress += deltaProgress;
+                LoadingSpeedPerSeconds = (sumDeltaProgress / secondsCount) * LoadingAssetBundleFileSize;
+                LoadingRemainingSeconds = (1 - CurrentWebRequest.downloadProgress) / (sumDeltaProgress / secondsCount);
+                downloadProgressFromLastOneSeconds = CurrentWebRequest.downloadProgress;
+            }
         }
 
         public void LoadAssetBundle()
@@ -237,14 +271,34 @@ namespace SimpleABC
             Debug.LogError($"[AssetBundleManager] Load {key} from {CurrentWebRequest.url}, error: {logError}");
         }
 
+        private IEnumerator GetAssetBundleSize(string url, string loadKey)
+        {
+            UnityWebRequest webRequest = UnityWebRequest.Head(url);
+            yield return webRequest.SendWebRequest();
+            string contentLength = webRequest.GetResponseHeader("Content-Length");
+            if (WebRequestIsError(webRequest))
+                LoadingAssetBundleFileSize = -1;
+            else
+                LoadingAssetBundleFileSize = Convert.ToInt64(contentLength);
+            Debug.Log($"[AssetBundleManager] Get Asset Bundle Size {loadKey} Content-Length: {LoadingAssetBundleFileSize}");
+        }
+
         private IEnumerator LoadAssetBundleFromUrlRoutine(string url, string loadKey, UnityEvent successEvt, UnityEvent errorEvt, Hash128? hash)
         {
             Debug.Log($"[AssetBundleManager] Load {loadKey}");
+            // Get asset bundle size
+            yield return StartCoroutine(GetAssetBundleSize(url, loadKey));
             // Create request to get asset bundle from cache or download from server
             if (hash.HasValue)
                 CurrentWebRequest = UnityWebRequestAssetBundle.GetAssetBundle(url, hash.Value);
             else
                 CurrentWebRequest = UnityWebRequestAssetBundle.GetAssetBundle(url);
+            downloadProgressFromLastOneSeconds = 0f;
+            sumDeltaProgress = 0f;
+            secondsCountDown = 0f;
+            secondsCount = 0;
+            LoadingSpeedPerSeconds = 0f;
+            LoadingRemainingSeconds = float.PositiveInfinity;
             // Send request
             yield return CurrentWebRequest.SendWebRequest();
             // Error handling

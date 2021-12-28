@@ -5,9 +5,12 @@ namespace SimpleABC
 {
     public partial class UIAssetBundleLoading : MonoBehaviour
     {
-        public string formatLoadingAssetBundleFileName = "{0}";
-        public string formatLoadingAssetBundleFromCacheFileName = "{0}";
+        public string formatLoadingAssetBundleFileName = "Downloading.. {0}";
+        public string formatLoadingAssetBundleFromCacheFileName = "Initializing.. {0}";
         public string formatLoadedAssetBundles = "{0}/{1}";
+        public string formatLoadingSpeedPerSeconds = "{0} {1}/s";
+        public string formatLoadingRemainingSeconds = "{0} Seconds";
+        public string formatLoadingAssetBundleFileSize = "{0} {1}";
         public GameObject rootObject;
         public Text uiTextProgress;
         public Image imageGage;
@@ -17,6 +20,9 @@ namespace SimpleABC
         public Text textLoadingAssetBundleFileName;
         public Text textLoadingAssetBundleFromCacheFileName;
         public Text textLoadedAssetBundlesCount;
+        public Text textLoadingSpeedPerSeconds;
+        public Text textLoadingRemainingSeconds;
+        public Text textLoadingAssetBundleFileSize;
         public GameObject[] loadingSignalObjects;
         public GameObject[] loadedSignalObjects;
 
@@ -72,6 +78,25 @@ namespace SimpleABC
                             textLoadingAssetBundleFileName.text = !string.IsNullOrEmpty(AssetBundleManager.Singleton.LoadingAssetBundleFileName) ? string.Format(formatLoadingAssetBundleFileName, AssetBundleManager.Singleton.LoadingAssetBundleFileName) : string.Empty;
                         if (textLoadingAssetBundleFromCacheFileName != null)
                             textLoadingAssetBundleFromCacheFileName.text = !string.IsNullOrEmpty(AssetBundleManager.Singleton.LoadingAssetBundleFromCacheFileName) ? string.Format(formatLoadingAssetBundleFromCacheFileName, AssetBundleManager.Singleton.LoadingAssetBundleFromCacheFileName) : string.Empty;
+
+                        if (!string.IsNullOrEmpty(AssetBundleManager.Singleton.LoadingAssetBundleFileName))
+                        {
+                            if (textLoadingSpeedPerSeconds != null)
+                                textLoadingSpeedPerSeconds.text = AssetBundleManager.Singleton.LoadingSpeedPerSeconds <= 0 ? string.Empty : SizeSuffix(formatLoadingSpeedPerSeconds, AssetBundleManager.Singleton.LoadingSpeedPerSeconds);
+                            if (textLoadingRemainingSeconds != null)
+                                textLoadingRemainingSeconds.text = double.IsInfinity(AssetBundleManager.Singleton.LoadingRemainingSeconds) ? string.Empty : string.Format(formatLoadingRemainingSeconds, AssetBundleManager.Singleton.LoadingRemainingSeconds.ToString("N0"));
+                            if (textLoadingAssetBundleFileSize != null)
+                                textLoadingAssetBundleFileSize.text = SizeSuffix(formatLoadingAssetBundleFileSize, AssetBundleManager.Singleton.LoadingAssetBundleFileSize);
+                        }
+                        else
+                        {
+                            if (textLoadingSpeedPerSeconds != null)
+                                textLoadingSpeedPerSeconds.text = string.Empty;
+                            if (textLoadingRemainingSeconds != null)
+                                textLoadingRemainingSeconds.text = string.Empty;
+                            if (textLoadingAssetBundleFileSize != null)
+                                textLoadingAssetBundleFileSize.text = string.Empty;
+                        }
                     }
                     break;
             }
@@ -84,6 +109,31 @@ namespace SimpleABC
             {
                 obj.SetActive(isDone);
             }
+        }
+
+        static readonly string[] SizeSuffixes = { "bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB" };
+        static string SizeSuffix(string format, double value, int decimalPlaces = 2)
+        {
+            if (decimalPlaces < 0) decimalPlaces = 2;
+            if (value < 0) { return "-" + SizeSuffix(format, -value, decimalPlaces); }
+            if (value == 0) { return string.Format("{0:n" + decimalPlaces + "} bytes", 0); }
+
+            // mag is 0 for bytes, 1 for KB, 2, for MB, etc.
+            int mag = (int)System.Math.Log(value, 1024);
+
+            // 1L << (mag * 10) == 2 ^ (10 * mag) 
+            // [i.e. the number of bytes in the unit corresponding to mag]
+            decimal adjustedSize = (decimal)value / (1L << (mag * 10));
+
+            // make adjustment when the value is large enough that
+            // it would round up to 1000 or more
+            if (System.Math.Round(adjustedSize, decimalPlaces) >= 1000)
+            {
+                mag += 1;
+                adjustedSize /= 1024;
+            }
+
+            return string.Format(format, adjustedSize.ToString("N" + decimalPlaces), SizeSuffixes[mag]);
         }
     }
 }
