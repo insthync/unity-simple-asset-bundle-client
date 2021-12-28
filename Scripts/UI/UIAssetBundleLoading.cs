@@ -6,6 +6,7 @@ namespace SimpleABC
     public partial class UIAssetBundleLoading : MonoBehaviour
     {
         public string formatLoadingAssetBundleFileName = "{0}";
+        public string formatLoadingAssetBundleFromCacheFileName = "{0}";
         public string formatLoadedAssetBundles = "{0}/{1}";
         public GameObject rootObject;
         public Text uiTextProgress;
@@ -14,7 +15,10 @@ namespace SimpleABC
         public Text uiTextTotalProgress;
         public Image imageGageTotal;
         public Text textLoadingAssetBundleFileName;
+        public Text textLoadingAssetBundleFromCacheFileName;
         public Text textLoadedAssetBundlesCount;
+        public GameObject[] loadingSignalObjects;
+        public GameObject[] loadedSignalObjects;
 
         private void Awake()
         {
@@ -61,11 +65,22 @@ namespace SimpleABC
                             imageGageTotal.fillAmount = AssetBundleManager.Singleton.TotalLoadProgress;
 
                         if (textLoadingAssetBundleFileName != null)
-                            textLoadingAssetBundleFileName.text = string.Format(formatLoadingAssetBundleFileName, AssetBundleManager.Singleton.LoadingAssetBundleFileName);
+                            textLoadingAssetBundleFileName.text = !string.IsNullOrEmpty(AssetBundleManager.Singleton.LoadingAssetBundleFileName) ? string.Format(formatLoadingAssetBundleFileName, AssetBundleManager.Singleton.LoadingAssetBundleFileName) : string.Empty;
+                        if (textLoadingAssetBundleFromCacheFileName != null)
+                            textLoadingAssetBundleFromCacheFileName.text = !string.IsNullOrEmpty(AssetBundleManager.Singleton.LoadingAssetBundleFromCacheFileName) ? string.Format(formatLoadingAssetBundleFromCacheFileName, AssetBundleManager.Singleton.LoadingAssetBundleFromCacheFileName) : string.Empty;
                         if (textLoadedAssetBundlesCount != null)
                             textLoadedAssetBundlesCount.text = string.Format(formatLoadedAssetBundles, AssetBundleManager.Singleton.LoadedAssetBundlesCount, AssetBundleManager.Singleton.LoadingAssetBundlesCount);
                     }
                     break;
+            }
+            bool isDone = AssetBundleManager.Singleton.CurrentLoadState == AssetBundleManager.LoadState.Done;
+            foreach (GameObject obj in loadingSignalObjects)
+            {
+                obj.SetActive(!isDone);
+            }
+            foreach (GameObject obj in loadedSignalObjects)
+            {
+                obj.SetActive(isDone);
             }
         }
     }

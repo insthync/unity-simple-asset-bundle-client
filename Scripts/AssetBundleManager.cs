@@ -112,6 +112,7 @@ namespace SimpleABC
         public int LoadedAssetBundlesCount { get; protected set; } = 0;
         public float TotalLoadProgress { get { return LoadedAssetBundlesCount == LoadingAssetBundlesCount ? 1f : ((float)LoadedAssetBundlesCount / (float)LoadingAssetBundlesCount); } }
         public string LoadingAssetBundleFileName { get; protected set; }
+        public string LoadingAssetBundleFromCacheFileName { get; protected set; }
         public AssetBundleSetting CurrentSetting { get; protected set; }
         public string ServerUrl { get { return !string.IsNullOrEmpty(CurrentSetting.overrideServerUrl) ? CurrentSetting.overrideServerUrl : serverUrl; } }
         public string LocalFolderPath { get { return !string.IsNullOrEmpty(CurrentSetting.overrideLocalFolderPath) ? CurrentSetting.overrideLocalFolderPath : localFolderPath; } }
@@ -314,9 +315,13 @@ namespace SimpleABC
             CurrentLoadState = LoadState.LoadAssetBundles;
             foreach (KeyValuePair<string, AssetBundleInfo> loadingAssetBundle in loadingAssetBundles)
             {
+                LoadingAssetBundleFileName = string.Empty;
+                LoadingAssetBundleFromCacheFileName = string.Empty;
                 isCached = loadingAssetBundle.Value.cached;
                 if (!isCached)
                     LoadingAssetBundleFileName = loadingAssetBundle.Key;
+                else
+                    LoadingAssetBundleFromCacheFileName = loadingAssetBundle.Key;
                 yield return StartCoroutine(LoadAssetBundleFromUrlRoutine(loadingAssetBundle.Value.url, $"dependency: {loadingAssetBundle.Key}", onAssetBundlesLoaded, onAssetBundlesLoadedFail, loadingAssetBundle.Value.hash));
                 if (tempErrorOccuring)
                     yield break;
