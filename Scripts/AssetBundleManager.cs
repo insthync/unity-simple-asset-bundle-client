@@ -343,7 +343,12 @@ namespace SimpleABC
                     downloadHash = manifest.GetAssetBundleHash(dependency);
                     if (!loadingAssetBundles.ContainsKey(dependency))
                     {
+                        // Unity 2022+ has no `Caching` for WebGL
+#if !UNITY_WEBGL
                         isCached = Caching.IsVersionCached(downloadingUrl, downloadHash);
+#else
+                        isCached = false;
+#endif
                         loadingAssetBundles.Add(dependency, new AssetBundleInfo()
                         {
                             url = downloadingUrl,
@@ -360,7 +365,12 @@ namespace SimpleABC
                 downloadHash = manifest.GetAssetBundleHash(assetBundle);
                 if (!loadingAssetBundles.ContainsKey(assetBundle))
                 {
+                    // Unity 2022+ has no `Caching` for WebGL
+#if !UNITY_WEBGL
                     isCached = Caching.IsVersionCached(downloadingUrl, downloadHash);
+#else
+                    isCached = false;
+#endif
                     loadingAssetBundles.Add(assetBundle, new AssetBundleInfo()
                     {
                         url = downloadingUrl,
