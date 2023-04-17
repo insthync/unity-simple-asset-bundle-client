@@ -18,7 +18,6 @@ namespace SimpleABC
         public Text uiTextTotalProgress;
         public Image imageGageTotal;
         public Text textLoadingAssetBundleFileName;
-        public Text textLoadingAssetBundleFromCacheFileName;
         public Text textLoadedAssetBundlesCount;
         public Text textLoadingSpeedPerSeconds;
         public Text textLoadingRemainingSeconds;
@@ -76,8 +75,6 @@ namespace SimpleABC
 
                         if (textLoadingAssetBundleFileName != null)
                             textLoadingAssetBundleFileName.text = !string.IsNullOrEmpty(AssetBundleManager.Singleton.LoadingAssetBundleFileName) ? string.Format(formatLoadingAssetBundleFileName, AssetBundleManager.Singleton.LoadingAssetBundleFileName) : string.Empty;
-                        if (textLoadingAssetBundleFromCacheFileName != null)
-                            textLoadingAssetBundleFromCacheFileName.text = !string.IsNullOrEmpty(AssetBundleManager.Singleton.LoadingAssetBundleFromCacheFileName) ? string.Format(formatLoadingAssetBundleFromCacheFileName, AssetBundleManager.Singleton.LoadingAssetBundleFromCacheFileName) : string.Empty;
 
                         if (!string.IsNullOrEmpty(AssetBundleManager.Singleton.LoadingAssetBundleFileName))
                         {

@@ -42,7 +42,6 @@ namespace SimpleABC
         {
             public string url;
             public Hash128 hash;
-            public bool cached;
         }
 
         public static AssetBundleManager Singleton { get; private set; }
@@ -115,26 +114,24 @@ namespace SimpleABC
         public int LoadingAssetBundlesCount { get; protected set; } = 0;
         public int LoadingAssetBundlesFromCacheCount { get; protected set; } = 0;
         public int LoadedAssetBundlesCount { get; protected set; } = 0;
-        public int LoadedAssetBundlesFromCacheCount { get; protected set; } = 0;
         public long LoadingAssetBundleFileSize { get; protected set; } = 0;
         public double LoadingSpeedPerSeconds { get; protected set; } = 0;
         public double LoadingRemainingSeconds { get; protected set; } = 0;
         public float TotalLoadProgress { get { return LoadedAssetBundlesCount == LoadingAssetBundlesCount ? 1f : ((float)LoadedAssetBundlesCount / (float)LoadingAssetBundlesCount); } }
         public string LoadingAssetBundleFileName { get; protected set; }
-        public string LoadingAssetBundleFromCacheFileName { get; protected set; }
         public AssetBundleSetting CurrentSetting { get; protected set; }
         public string ServerUrl { get { return !string.IsNullOrEmpty(CurrentSetting.overrideServerUrl) ? CurrentSetting.overrideServerUrl : serverUrl; } }
         public string LocalFolderPath { get { return !string.IsNullOrEmpty(CurrentSetting.overrideLocalFolderPath) ? CurrentSetting.overrideLocalFolderPath : localFolderPath; } }
         public Dictionary<string, AssetBundle> Dependencies { get; private set; } = new Dictionary<string, AssetBundle>();
         public UnityWebRequest CurrentWebRequest { get; protected set; }
 
-        private bool tempErrorOccuring = false;
-        private AssetBundle tempAssetBundle = null;
-        private readonly Dictionary<string, AssetBundleInfo> loadingAssetBundles = new Dictionary<string, AssetBundleInfo>();
-        private float downloadProgressFromLastOneSeconds = 0f;
-        private float sumDeltaProgress = 0f;
-        private float oneSecondsCounter = 0f;
-        private float secondsCount = 0;
+        private bool _tempErrorOccuring = false;
+        private AssetBundle _tempAssetBundle = null;
+        private readonly Dictionary<string, AssetBundleInfo> _loadingAssetBundles = new Dictionary<string, AssetBundleInfo>();
+        private float _downloadProgressFromLastOneSeconds = 0f;
+        private float _sumDeltaProgress = 0f;
+        private float _oneSecondsCounter = 0f;
+        private float _secondsCount = 0;
 
         private void Awake()
         {
@@ -193,16 +190,16 @@ namespace SimpleABC
                 return;
             if (CurrentWebRequest == null || CurrentWebRequest.isDone)
                 return;
-            oneSecondsCounter += Time.deltaTime;
-            if (oneSecondsCounter >= 1f)
+            _oneSecondsCounter += Time.deltaTime;
+            if (_oneSecondsCounter >= 1f)
             {
-                secondsCount += oneSecondsCounter;
-                oneSecondsCounter = 0f;
-                float deltaProgress = CurrentWebRequest.downloadProgress - downloadProgressFromLastOneSeconds;
-                sumDeltaProgress += deltaProgress;
-                LoadingSpeedPerSeconds = (sumDeltaProgress / secondsCount) * LoadingAssetBundleFileSize;
-                LoadingRemainingSeconds = (1 - CurrentWebRequest.downloadProgress) / (sumDeltaProgress / secondsCount);
-                downloadProgressFromLastOneSeconds = CurrentWebRequest.downloadProgress;
+                _secondsCount += _oneSecondsCounter;
+                _oneSecondsCounter = 0f;
+                float deltaProgress = CurrentWebRequest.downloadProgress - _downloadProgressFromLastOneSeconds;
+                _sumDeltaProgress += deltaProgress;
+                LoadingSpeedPerSeconds = (_sumDeltaProgress / _secondsCount) * LoadingAssetBundleFileSize;
+                LoadingRemainingSeconds = (1 - CurrentWebRequest.downloadProgress) / (_sumDeltaProgress / _secondsCount);
+                _downloadProgressFromLastOneSeconds = CurrentWebRequest.downloadProgress;
             }
         }
 
@@ -262,7 +259,7 @@ namespace SimpleABC
 
         private void OnAssetBundleLoadedFail(string key, UnityEvent evt, string error = "")
         {
-            tempErrorOccuring = true;
+            _tempErrorOccuring = true;
             evt.Invoke();
             CurrentLoadState = LoadState.None;
             string logError = error;
@@ -293,10 +290,10 @@ namespace SimpleABC
                 CurrentWebRequest = UnityWebRequestAssetBundle.GetAssetBundle(url, hash.Value);
             else
                 CurrentWebRequest = UnityWebRequestAssetBundle.GetAssetBundle(url);
-            downloadProgressFromLastOneSeconds = 0f;
-            sumDeltaProgress = 0f;
-            oneSecondsCounter = 0f;
-            secondsCount = 0;
+            _downloadProgressFromLastOneSeconds = 0f;
+            _sumDeltaProgress = 0f;
+            _oneSecondsCounter = 0f;
+            _secondsCount = 0;
             LoadingSpeedPerSeconds = 0f;
             LoadingRemainingSeconds = float.PositiveInfinity;
             // Send request
@@ -304,8 +301,8 @@ namespace SimpleABC
             // Error handling
             if (IsWebRequestLoadedFail(loadKey, errorEvt))
                 yield break;
-            tempAssetBundle = DownloadHandlerAssetBundle.GetContent(CurrentWebRequest);
-            if (tempAssetBundle == null)
+            _tempAssetBundle = DownloadHandlerAssetBundle.GetContent(CurrentWebRequest);
+            if (_tempAssetBundle == null)
             {
                 OnAssetBundleLoadedFail(loadKey, errorEvt, "No Asset Bundle");
                 yield break;
@@ -321,16 +318,16 @@ namespace SimpleABC
             string downloadingUrl;
             Hash128 downloadHash;
             bool isCached;
-            tempErrorOccuring = false;
-            tempAssetBundle = null;
+            _tempErrorOccuring = false;
+            _tempAssetBundle = null;
             // Load platform's manifest to get all asset bundles
             CurrentLoadState = LoadState.LoadManifest;
             downloadingUrl = UriAppend(new Uri(url), CurrentSetting.platformFolderName, CurrentSetting.platformFolderName).AbsoluteUri;
             yield return StartCoroutine(LoadAssetBundleFromUrlRoutine(downloadingUrl, "manifest", onManifestLoaded, onManifestLoadedFail, null));
-            if (tempErrorOccuring)
+            if (_tempErrorOccuring)
                 yield break;
             // Read platform's manifest to get all asset bundles info
-            AssetBundleManifest manifest = tempAssetBundle.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
+            AssetBundleManifest manifest = _tempAssetBundle.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
             string[] assetBundles = manifest.GetAllAssetBundles();
             LoadingAssetBundlesCount = 0;
             LoadingAssetBundlesFromCacheCount = 0;
@@ -341,7 +338,7 @@ namespace SimpleABC
                 {
                     downloadingUrl = UriAppend(new Uri(url), CurrentSetting.platformFolderName, dependency).AbsoluteUri;
                     downloadHash = manifest.GetAssetBundleHash(dependency);
-                    if (!loadingAssetBundles.ContainsKey(dependency))
+                    if (!_loadingAssetBundles.ContainsKey(dependency))
                     {
                         // Unity 2022+ has no `Caching` for WebGL
 #if !UNITY_WEBGL
@@ -349,11 +346,10 @@ namespace SimpleABC
 #else
                         isCached = false;
 #endif
-                        loadingAssetBundles.Add(dependency, new AssetBundleInfo()
+                        _loadingAssetBundles.Add(dependency, new AssetBundleInfo()
                         {
                             url = downloadingUrl,
                             hash = downloadHash,
-                            cached = isCached,
                         });
                         if (!isCached)
                             LoadingAssetBundlesCount++;
@@ -363,7 +359,7 @@ namespace SimpleABC
                 }
                 downloadingUrl = UriAppend(new Uri(url), CurrentSetting.platformFolderName, assetBundle).AbsoluteUri;
                 downloadHash = manifest.GetAssetBundleHash(assetBundle);
-                if (!loadingAssetBundles.ContainsKey(assetBundle))
+                if (!_loadingAssetBundles.ContainsKey(assetBundle))
                 {
                     // Unity 2022+ has no `Caching` for WebGL
 #if !UNITY_WEBGL
@@ -371,11 +367,10 @@ namespace SimpleABC
 #else
                     isCached = false;
 #endif
-                    loadingAssetBundles.Add(assetBundle, new AssetBundleInfo()
+                    _loadingAssetBundles.Add(assetBundle, new AssetBundleInfo()
                     {
                         url = downloadingUrl,
                         hash = downloadHash,
-                        cached = isCached,
                     });
                     if (!isCached)
                         LoadingAssetBundlesCount++;
@@ -385,25 +380,16 @@ namespace SimpleABC
             }
             // Load all asset bundles
             LoadedAssetBundlesCount = 0;
-            LoadedAssetBundlesFromCacheCount = 0;
             CurrentLoadState = LoadState.LoadAssetBundles;
-            foreach (KeyValuePair<string, AssetBundleInfo> loadingAssetBundle in loadingAssetBundles)
+            foreach (KeyValuePair<string, AssetBundleInfo> loadingAssetBundle in _loadingAssetBundles)
             {
                 LoadingAssetBundleFileName = string.Empty;
-                LoadingAssetBundleFromCacheFileName = string.Empty;
-                isCached = loadingAssetBundle.Value.cached;
-                if (!isCached)
-                    LoadingAssetBundleFileName = loadingAssetBundle.Key;
-                else
-                    LoadingAssetBundleFromCacheFileName = loadingAssetBundle.Key;
+                LoadingAssetBundleFileName = loadingAssetBundle.Key;
                 yield return StartCoroutine(LoadAssetBundleFromUrlRoutine(loadingAssetBundle.Value.url, $"dependency: {loadingAssetBundle.Key}", onAssetBundlesLoaded, onAssetBundlesLoadedFail, loadingAssetBundle.Value.hash));
-                if (tempErrorOccuring)
+                if (_tempErrorOccuring)
                     yield break;
-                Dependencies[loadingAssetBundle.Key] = tempAssetBundle;
-                if (!isCached)
-                    LoadedAssetBundlesCount++;
-                else
-                    LoadedAssetBundlesFromCacheCount++;
+                Dependencies[loadingAssetBundle.Key] = _tempAssetBundle;
+                LoadedAssetBundlesCount++;
             }
             // All asset bundles loaded, load init scene
             CurrentLoadState = LoadState.Done;
