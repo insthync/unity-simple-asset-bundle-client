@@ -51,8 +51,7 @@ namespace SimpleABC
                         textLoadedAssetBundlesCount.text = string.Empty;
                     break;
                 case AssetBundleManager.LoadState.LoadAssetBundles:
-                    if (AssetBundleManager.Singleton.LoadingAssetBundlesCount > 0 ||
-                        AssetBundleManager.Singleton.LoadingAssetBundlesFromCacheCount > 0)
+                    if (AssetBundleManager.Singleton.LoadingAssetBundlesCount > 0)
                     {
                         if (rootObject != null)
                             rootObject.SetActive(true);
