@@ -112,7 +112,6 @@ namespace SimpleABC
         }
         public LoadState CurrentLoadState { get; protected set; } = LoadState.None;
         public int LoadingAssetBundlesCount { get; protected set; } = 0;
-        public int LoadingAssetBundlesFromCacheCount { get; protected set; } = 0;
         public int LoadedAssetBundlesCount { get; protected set; } = 0;
         public long LoadingAssetBundleFileSize { get; protected set; } = 0;
         public double LoadingSpeedPerSeconds { get; protected set; } = 0;
@@ -317,7 +316,6 @@ namespace SimpleABC
             Dependencies.Clear();
             string downloadingUrl;
             Hash128 downloadHash;
-            bool isCached;
             _tempErrorOccuring = false;
             _tempAssetBundle = null;
             // Load platform's manifest to get all asset bundles
@@ -330,7 +328,6 @@ namespace SimpleABC
             AssetBundleManifest manifest = _tempAssetBundle.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
             string[] assetBundles = manifest.GetAllAssetBundles();
             LoadingAssetBundlesCount = 0;
-            LoadingAssetBundlesFromCacheCount = 0;
             foreach (string assetBundle in assetBundles)
             {
                 string[] dependencies = manifest.GetAllDependencies(assetBundle);
@@ -340,42 +337,24 @@ namespace SimpleABC
                     downloadHash = manifest.GetAssetBundleHash(dependency);
                     if (!_loadingAssetBundles.ContainsKey(dependency))
                     {
-                        // Unity 2022+ has no `Caching` for WebGL
-#if !UNITY_WEBGL
-                        isCached = Caching.IsVersionCached(downloadingUrl, downloadHash);
-#else
-                        isCached = false;
-#endif
                         _loadingAssetBundles.Add(dependency, new AssetBundleInfo()
                         {
                             url = downloadingUrl,
                             hash = downloadHash,
                         });
-                        if (!isCached)
-                            LoadingAssetBundlesCount++;
-                        else
-                            LoadingAssetBundlesFromCacheCount++;
+                        LoadingAssetBundlesCount++;
                     }
                 }
                 downloadingUrl = UriAppend(new Uri(url), CurrentSetting.platformFolderName, assetBundle).AbsoluteUri;
                 downloadHash = manifest.GetAssetBundleHash(assetBundle);
                 if (!_loadingAssetBundles.ContainsKey(assetBundle))
                 {
-                    // Unity 2022+ has no `Caching` for WebGL
-#if !UNITY_WEBGL
-                    isCached = Caching.IsVersionCached(downloadingUrl, downloadHash);
-#else
-                    isCached = false;
-#endif
                     _loadingAssetBundles.Add(assetBundle, new AssetBundleInfo()
                     {
                         url = downloadingUrl,
                         hash = downloadHash,
                     });
-                    if (!isCached)
-                        LoadingAssetBundlesCount++;
-                    else
-                        LoadingAssetBundlesFromCacheCount++;
+                    LoadingAssetBundlesCount++;
                 }
             }
             // Load all asset bundles
